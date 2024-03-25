@@ -1,99 +1,21 @@
 package routes
 
 import (
-	"context"
-	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net/http"
-	"strconv"
-
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"noah.io/ark/rest/models"
+	"noah.io/ark/rest/handler"
 )
 
-var client *mongo.Client
+// 주어진 라우터에 댓글 API 엔드포인트 등록
+func CommentAPI(router *mux.Router) {
+	// 댓글 추가 API 엔드포인트 등록
+	router.HandleFunc("/comment", handler.AddCommentHandler).Methods("POST")
 
-func init() {
-	initMongoClient()
-}
+	// 댓글 불러오기 API 엔드포인트 등록
+	router.HandleFunc("/comment/{worry_id}", handler.GetCommentsHandler).Methods("GET")
 
-func initMongoClient() {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	client, _ = mongo.Connect(context.Background(), clientOptions)
-}
+	// 댓글 수정하기 API 엔드포인트 등록
+	router.HandleFunc("/comment/{comments_id}", handler.UpdateCommentHandler).Methods("PATCH")
 
-func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
-	var comment models.Comment
-	json.NewDecoder(r.Body).Decode(&comment)
-	comment.ID = primitive.NewObjectID()
-
-	collection := client.Database("test").Collection("comments")
-	_, err := collection.InsertOne(context.Background(), comment)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to add comment"})
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]string{"message": "Comment added successfully"})
-}
-
-func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	worryID, _ := strconv.Atoi(params["worry_id"])
-
-	collection := client.Database("test").Collection("comments")
-	cursor, err := collection.Find(context.Background(), bson.M{"worryid": worryID})
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get comments"})
-		return
-	}
-
-	var comments []models.Comment
-	defer cursor.Close(context.Background())
-	for cursor.Next(context.Background()) {
-		var comment models.Comment
-		cursor.Decode(&comment)
-		comments = append(comments, comment)
-	}
-
-	json.NewEncoder(w).Encode(comments)
-}
-
-func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
-
-	var comment models.Comment
-	json.NewDecoder(r.Body).Decode(&comment)
-	comment.ID = commentsID
-
-	collection := client.Database("test").Collection("comments")
-	_, err := collection.ReplaceOne(context.Background(), bson.M{"_id": commentsID}, comment)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update comment"})
-		return
-	}
-
-	json.NewEncoder(w).Encode(map[string]string{"message": "Comment updated successfully"})
-}
-
-func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
-
-	collection := client.Database("test").Collection("comments")
-	_, err := collection.DeleteOne(context.Background(), bson.M{"_id": commentsID})
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete comment"})
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+	// 댓글 삭제하기 API 엔드포인트 등록
+	router.HandleFunc("/comment/{comments_id}", handler.DeleteCommentHandler).Methods("DELETE")
 }
