@@ -2,67 +2,162 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
 	"log"
-	"time"
+	"net/http"
+	"strconv"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// MongoDB 연결 정보
-const (
-	uri        = "mongodb://localhost:27017"
-	database   = "gomean"
-	collection = "gomean"
-)
+// Comment 모델 정의
+type Comment struct {
+	ID       int    `json:"id"`
+	WorryID  int    `json:"worry_id"`
+	Nickname string `json:"nickname,omitempty"`
+	Comment  string `json:"comment"`
+}
 
-// Person 구조체 정의
-type Person struct {
-	Name string
-	Age  int
-	City string
+// MongoDB 클라이언트
+var client *mongo.Client
+
+// MongoDB 연결 초기화
+func initMongoClient() error {
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	// MongoDB 클라이언트 생성
+	newClient, err := mongo.Connect(context.Background(), clientOptions)
+	if err != nil {
+		return err
+	}
+
+	// MongoDB 연결 테스트
+	err = newClient.Ping(context.Background(), nil)
+	if err != nil {
+		return err
+	}
+
+	// 기존 클라이언트를 새로운 클라이언트로 업데이트
+	client = newClient
+
+	fmt.Println("Connected to MongoDB!")
+	return nil
+}
+
+// 댓글 추가 API
+func addCommentHandler(w http.ResponseWriter, r *http.Request) {
+	// MongoDB 클라이언트가 nil이면 초기화 시도
+	if client == nil {
+		if err := initMongoClient(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"message": "Failed to connect to MongoDB"})
+			return
+		}
+	}
+
+	var comment Comment
+	json.NewDecoder(r.Body).Decode(&comment)
+
+	// MongoDB에 댓글 추가
+	collection := client.Database("test").Collection("comments")
+	_, err := collection.InsertOne(context.Background(), comment)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to add comment"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"message": "Comment added successfully"})
+}
+
+// 댓글 불러오기 API
+func getCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	worryID, _ := strconv.Atoi(params["worry_id"])
+
+	// MongoDB에서 해당 쓰레기의 댓글 불러오기
+	collection := client.Database("test").Collection("comments")
+	cursor, err := collection.Find(context.Background(), bson.M{"worryid": worryID})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get comments"})
+		return
+	}
+
+	var comments []Comment
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var comment Comment
+		cursor.Decode(&comment)
+		comments = append(comments, comment)
+	}
+
+	json.NewEncoder(w).Encode(comments)
+}
+
+// 댓글 수정하기 API
+func updateCommentHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	commentsID, _ := strconv.Atoi(params["comments_id"])
+
+	var comment Comment
+	json.NewDecoder(r.Body).Decode(&comment)
+	comment.ID = commentsID // URL에서 가져온 ID로 설정
+
+	// MongoDB에서 해당 ID의 댓글을 업데이트
+	collection := client.Database("test").Collection("comments")
+	_, err := collection.ReplaceOne(context.Background(), bson.M{"id": commentsID}, comment)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update comment"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"message": "Comment updated successfully"})
+}
+
+// 댓글 삭제하기 API
+func deleteCommentHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	commentsID, _ := strconv.Atoi(params["comments_id"])
+
+	// MongoDB에서 해당 ID의 댓글 삭제
+	collection := client.Database("test").Collection("comments")
+	_, err := collection.DeleteOne(context.Background(), bson.M{"id": commentsID})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete comment"})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func main() {
-	app := fiber.New()
-
-	//run database
-	//configs.ConnectDB()
-
-	// MongoDB 연결 설정
-	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
-	if err != nil {
-		log.Fatal(err)
+	// MongoDB 클라이언트 초기화
+	if err := initMongoClient(); err != nil {
+		log.Fatal("Failed to connect to MongoDB:", err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
 
-	// 데이터베이스 및 컬렉션 선택
-	db := client.Database(database)
-	col := db.Collection(collection)
+	// 라우터 설정
+	router := mux.NewRouter()
 
-	// 데이터 삽입 예제
-	person := Person{"John", 30, "New York"}
-	insertResult, err := col.InsertOne(ctx, person)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Inserted a single document: ", insertResult.InsertedID)
+	// 댓글 추가 API 엔드포인트 등록
+	router.HandleFunc("/comment", addCommentHandler).Methods("POST")
 
-	// 데이터 조회 예제
-	var result Person
-	err = col.FindOne(ctx, map[string]string{"name": "John"}).Decode(&result)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Found a single document: ", result)
+	// 댓글 불러오기 API 엔드포인트 등록
+	router.HandleFunc("/comment/{worry_id}", getCommentsHandler).Methods("GET")
 
-	app.Listen(":8000")
+	// 댓글 수정하기 API 엔드포인트 등록
+	router.HandleFunc("/comment/{comments_id}", updateCommentHandler).Methods("PATCH")
+
+	// 댓글 삭제하기 API 엔드포인트 등록
+	router.HandleFunc("/comment/{comments_id}", deleteCommentHandler).Methods("DELETE")
+
+	// 서버 시작
+	fmt.Println("Server started on port 8080")
+	log.Fatal(http.ListenAndServe(":8080", router))
 }
