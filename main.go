@@ -10,16 +10,17 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Comment 모델 정의
 type Comment struct {
-	ID       int    `json:"id"`
-	WorryID  int    `json:"worry_id"`
-	Nickname string `json:"nickname,omitempty"`
-	Comment  string `json:"comment"`
+	ID       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	WorryID  int                `json:"worry_id"`
+	Nickname string             `json:"nickname,omitempty"`
+	Comment  string             `json:"comment"`
 }
 
 // MongoDB 클라이언트
@@ -61,6 +62,9 @@ func addCommentHandler(w http.ResponseWriter, r *http.Request) {
 	var comment Comment
 	json.NewDecoder(r.Body).Decode(&comment)
 
+	// 새로운 ObjectID 생성
+	comment.ID = primitive.NewObjectID()
+
 	// MongoDB에 댓글 추가
 	collection := client.Database("test").Collection("comments")
 	_, err := collection.InsertOne(context.Background(), comment)
@@ -101,7 +105,7 @@ func getCommentsHandler(w http.ResponseWriter, r *http.Request) {
 // 댓글 수정하기 API
 func updateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	commentsID, _ := strconv.Atoi(params["comments_id"])
+	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
 
 	var comment Comment
 	json.NewDecoder(r.Body).Decode(&comment)
@@ -109,7 +113,7 @@ func updateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	// MongoDB에서 해당 ID의 댓글을 업데이트
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.ReplaceOne(context.Background(), bson.M{"id": commentsID}, comment)
+	_, err := collection.ReplaceOne(context.Background(), bson.M{"_id": commentsID}, comment)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update comment"})
@@ -122,11 +126,11 @@ func updateCommentHandler(w http.ResponseWriter, r *http.Request) {
 // 댓글 삭제하기 API
 func deleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	commentsID, _ := strconv.Atoi(params["comments_id"])
+	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
 
 	// MongoDB에서 해당 ID의 댓글 삭제
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.DeleteOne(context.Background(), bson.M{"id": commentsID})
+	_, err := collection.DeleteOne(context.Background(), bson.M{"_id": commentsID})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete comment"})
