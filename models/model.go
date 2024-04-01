@@ -8,9 +8,3 @@ type Categories struct {
 	Id       primitive.ObjectID
 	Category string
 }
-
-type Advices struct {
-	Id         primitive.ObjectID
-	CategoryId primitive.ObjectID
-	AiAdvice   string
-}

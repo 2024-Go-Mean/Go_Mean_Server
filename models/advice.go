@@ -1,26 +1,11 @@
 package models
 
-/*
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Advices struct {
-	Id         primitive.ObjectID
-	CategoryId primitive.ObjectID
-	AiAdvice   string
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	CategoryId primitive.ObjectID `json:"category_id"`
+	AiAdvice   string             `json:"ai_advice"`
 }
-
-func NewAdvice(id primitive.ObjectID, categoryId primitive.ObjectID, aiAdvice string) *Advices {
-
-	return &Advices{
-		Id:         id,
-		CategoryId: categoryId,
-		AiAdvice:   aiAdvice,
-	}
-}
-
-func (model *Advices) CollectionName() string {
-	return "advices"
-}
-*/
