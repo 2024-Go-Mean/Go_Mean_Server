@@ -5,6 +5,6 @@ import (
 )
 
 type Categories struct {
-	Id       primitive.ObjectID
+	ID       primitive.ObjectID
 	Category string
 }

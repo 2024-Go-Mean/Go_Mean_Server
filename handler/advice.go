@@ -31,7 +31,7 @@ func AddAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Advice added successfully"})
 }
 
-func GetAdvicesHandler(w http.ResponseWriter, r *http.Request) {
+func GetAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	adviceID, _ := strconv.Atoi(params["advice_id"])
 

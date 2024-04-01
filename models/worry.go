@@ -6,7 +6,7 @@ import (
 )
 
 type Worries struct {
-	Id         primitive.ObjectID `json:"id" bson:"_id"`
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
 	Title      string             `json:"title"`
 	Content    string             `json:"content"`
 	Nickname   string             `json:"nickname"`
