@@ -6,6 +6,6 @@ import (
 
 type Advices struct {
 	ID         primitive.ObjectID `json:"id" bson:"_id"`
-	CategoryId primitive.ObjectID `json:"category_id"`
+	CategoryID primitive.ObjectID `json:"category_id"`
 	AiAdvice   string             `json:"ai_advice"`
 }

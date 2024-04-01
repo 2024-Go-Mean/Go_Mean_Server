@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/gofiber/fiber/v2 v2.52.2
-	github.com/joho/godotenv v1.5.1
+	github.com/gorilla/mux v1.8.1
 	go.mongodb.org/mongo-driver v1.14.0
 )
 
@@ -21,7 +21,6 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.5.0 // indirect
-	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.4 // indirect

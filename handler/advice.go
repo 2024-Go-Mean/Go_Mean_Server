@@ -15,7 +15,7 @@ func init() {
 	initMongoClient()
 }
 
-func addAdviceHandler(w http.ResponseWriter, r *http.Request) {
+func AddAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	var advice models.Advices
 	json.NewDecoder(r.Body).Decode(&advice)
 	advice.ID = primitive.NewObjectID()
