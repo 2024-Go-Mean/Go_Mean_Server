@@ -6,32 +6,12 @@ import (
 )
 
 type Worries struct {
-	Id         primitive.ObjectID
-	Title      string
-	Content    string
-	Nickname   string
-	AiAdviceId Advices
-	CategoryId Categories
-	CreatedAt  primitive.DateTime
-}
-
-func getCurrentTime() time.Time {
-	return time.Now()
-}
-
-func NewWorry(id primitive.ObjectID, title string, content string, nickname string, aiAdviceId Advices, categoryId Categories) *Worries {
-
-	return &Worries{
-		Id:         id,
-		Title:      title,
-		Content:    content,
-		Nickname:   nickname,
-		AiAdviceId: aiAdviceId,
-		CategoryId: categoryId,
-		CreatedAt:  getCurrentTime(),
-	}
-}
-
-func (model *Worries) CollectionName() string {
-	return "worries"
+	Id         primitive.ObjectID `json:"id" bson:"_id"`
+	Title      string             `json:"title"`
+	Content    string             `json:"content"`
+	Nickname   string             `json:"nickname"`
+	AiAdviceId Advices            `json:"ai_advice_id"`
+	CategoryId Categories         `json:"category_id"`
+	CreatedAt  time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
+	UpdatedAt  time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }

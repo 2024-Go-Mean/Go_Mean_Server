@@ -1,5 +1,6 @@
 package models
 
+/*
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -22,3 +23,4 @@ func NewAdvice(id primitive.ObjectID, categoryId primitive.ObjectID, aiAdvice st
 func (model *Advices) CollectionName() string {
 	return "advices"
 }
+*/
