@@ -5,20 +5,7 @@ import (
 )
 
 type Advices struct {
-	Id         primitive.ObjectID
-	CategoryId primitive.ObjectID
-	AiAdvice   string
-}
-
-func NewAdvice(id primitive.ObjectID, categoryId primitive.ObjectID, aiAdvice string) *Advices {
-
-	return &Advices{
-		Id:         id,
-		CategoryId: categoryId,
-		AiAdvice:   aiAdvice,
-	}
-}
-
-func (model *Advices) CollectionName() string {
-	return "advices"
+	ID         primitive.ObjectID `json:"id" bson:"_id"`
+	CategoryID primitive.ObjectID `json:"category_id"`
+	AiAdvice   string             `json:"ai_advice"`
 }

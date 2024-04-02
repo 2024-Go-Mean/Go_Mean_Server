@@ -5,6 +5,6 @@ import (
 )
 
 type Categories struct {
-	Id       primitive.ObjectID
-	Category string
+	ID       primitive.ObjectID `json:"id" bson:"_id"`
+	Category string             `json:"category"`
 }

@@ -12,8 +12,11 @@ func main() {
 	// 라우터 설정
 	router := mux.NewRouter()
 	routes.CommentAPI(router)
+	routes.AdviceAPI(router)
+	routes.WorryAPI(router)
+	routes.CategoryAPI(router)
 
 	// 서버 시작
-	fmt.Println("Server started on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	fmt.Println("Server started on port 5000")
+	log.Fatal(http.ListenAndServe(":5000", router))
 }
