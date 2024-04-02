@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
 	"net/http"
 	"noah.io/ark/rest/models"
 	"strconv"
@@ -25,6 +26,7 @@ func AddAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to add advice"})
+		log.Fatal(err)
 		return
 	}
 
@@ -40,6 +42,7 @@ func GetAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get advices"})
+		log.Fatal(err)
 		return
 	}
 
@@ -67,6 +70,7 @@ func UpdateAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update advice"})
+		log.Fatal(err)
 		return
 	}
 
@@ -82,6 +86,7 @@ func DeleteAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete advice"})
+		log.Fatal(err)
 		return
 	}
 

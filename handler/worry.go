@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -26,6 +27,7 @@ func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to add worry"})
+		log.Fatal(err)
 		return
 	}
 
@@ -41,6 +43,7 @@ func GetWorryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get worries"})
+		log.Fatal(err)
 		return
 	}
 
@@ -68,6 +71,7 @@ func UpdateWorryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update worry"})
+		log.Fatal(err)
 		return
 	}
 
@@ -83,6 +87,7 @@ func DeleteWorryHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete worry"})
+		log.Fatal(err)
 		return
 	}
 
