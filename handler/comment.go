@@ -47,15 +47,12 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// URL에서 게시물 ID를 가져옵니다.
 	params := mux.Vars(r)
 	worryID := params["worry_id"]
 
 	collection := client.Database("test").Collection("comments")
 
-	// MongoDB에서 해당 게시물 ID에 해당하는 모든 Comment를 검색합니다.
 	cursor, err := collection.Find(context.Background(), bson.M{"worry_id": worryID})
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,7 +60,6 @@ func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
 	defer cursor.Close(context.Background())
 
 	var comments []models.Comment
-	// 검색된 결과를 Comment 슬라이스에 디코딩합니다.
 	for cursor.Next(context.Background()) {
 		var comment models.Comment
 		err := cursor.Decode(&comment)
@@ -74,24 +70,40 @@ func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
 		comments = append(comments, comment)
 	}
 
-	// 결과를 JSON 형식으로 반환합니다.
+	if err := cursor.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	json.NewEncoder(w).Encode(comments)
 }
 
 func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
+	commentsID, err := primitive.ObjectIDFromHex(params["comments_id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var comment models.Comment
-	json.NewDecoder(r.Body).Decode(&comment)
+	err = json.NewDecoder(r.Body).Decode(&comment)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	comment.ID = commentsID
 
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.ReplaceOne(context.Background(), bson.M{"_id": commentsID}, comment)
+	result, err := collection.ReplaceOne(context.Background(), bson.M{"_id": commentsID}, comment)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update comment"})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		http.Error(w, "No matching comment found", http.StatusNotFound)
 		return
 	}
 
@@ -101,13 +113,21 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
+	commentsID, err := primitive.ObjectIDFromHex(params["comments_id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.DeleteOne(context.Background(), bson.M{"_id": commentsID})
+	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": commentsID})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete comment"})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		http.Error(w, "No matching comment found", http.StatusNotFound)
 		return
 	}
 
