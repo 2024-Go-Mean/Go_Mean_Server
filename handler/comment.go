@@ -3,14 +3,12 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"net/http"
-	"strconv"
-
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http"
 	"noah.io/ark/rest/models"
 )
 
@@ -25,11 +23,18 @@ func initMongoClient() {
 
 func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 	var comment models.Comment
-	json.NewDecoder(r.Body).Decode(&comment)
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewDecoder(r.Body).Decode(&comment)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	comment.ID = primitive.NewObjectID()
 
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.InsertOne(context.Background(), comment)
+	_, err = collection.InsertOne(context.Background(), comment)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to add comment"})
@@ -40,41 +45,65 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	params := mux.Vars(r)
-	worryID, _ := strconv.Atoi(params["worry_id"])
+	worryID := params["worry_id"]
 
 	collection := client.Database("test").Collection("comments")
-	cursor, err := collection.Find(context.Background(), bson.M{"worryid": worryID})
+
+	cursor, err := collection.Find(context.Background(), bson.M{"worry_id": worryID})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get comments"})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	defer cursor.Close(context.Background())
 
 	var comments []models.Comment
-	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
 		var comment models.Comment
-		cursor.Decode(&comment)
+		err := cursor.Decode(&comment)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		comments = append(comments, comment)
+	}
+
+	if err := cursor.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(comments)
 }
 
 func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
+	commentsID, err := primitive.ObjectIDFromHex(params["comments_id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var comment models.Comment
-	json.NewDecoder(r.Body).Decode(&comment)
+	err = json.NewDecoder(r.Body).Decode(&comment)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	comment.ID = commentsID
 
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.ReplaceOne(context.Background(), bson.M{"_id": commentsID}, comment)
+	result, err := collection.ReplaceOne(context.Background(), bson.M{"_id": commentsID}, comment)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update comment"})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		http.Error(w, "No matching comment found", http.StatusNotFound)
 		return
 	}
 
@@ -82,14 +111,23 @@ func UpdateCommentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	commentsID, _ := primitive.ObjectIDFromHex(params["comments_id"])
+	commentsID, err := primitive.ObjectIDFromHex(params["comments_id"])
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	collection := client.Database("test").Collection("comments")
-	_, err := collection.DeleteOne(context.Background(), bson.M{"_id": commentsID})
+	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": commentsID})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to delete comment"})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		http.Error(w, "No matching comment found", http.StatusNotFound)
 		return
 	}
 
