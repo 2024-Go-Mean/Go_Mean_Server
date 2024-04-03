@@ -10,7 +10,8 @@ func AdviceAPI(router *mux.Router) {
 	router.HandleFunc("/advice", handler.AddAdviceHandler).Methods("POST")
 
 	// 조언 가져오기 API 엔드포인트 등록
-	router.HandleFunc("/advice/{advice_id}", handler.GetAdviceHandler).Methods("GET")
+	router.HandleFunc("/advice/{advice_id}", handler.GetOneAdviceHandler).Methods("GET")
+	router.HandleFunc("/advice", handler.GetAllAdvicesHandler).Methods("GET")
 
 	// 조언 수정하기 API 엔드포인트 등록
 	router.HandleFunc("/advice/{advice_id}", handler.UpdateAdviceHandler).Methods("PATCH")
