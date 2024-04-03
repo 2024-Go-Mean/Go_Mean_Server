@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"noah.io/ark/rest/models"
-	"strconv"
 )
 
 func init() {
@@ -17,6 +16,7 @@ func init() {
 }
 
 func AddCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var category models.Categories
 	json.NewDecoder(r.Body).Decode(&category)
 	category.ID = primitive.NewObjectID()
@@ -33,21 +33,44 @@ func AddCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Category added successfully"})
 }
 
-func GetCategoryHandler(w http.ResponseWriter, r *http.Request) {
+func GetOneCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// URL에서 경로 매개변수 가져오기
 	params := mux.Vars(r)
-	categoryID, _ := strconv.Atoi(params["category_id"])
+	categoryID, err := primitive.ObjectIDFromHex(params["category_id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid category ID"})
+		return
+	}
 
+	// MongoDB에서 해당 ID의 데이터 가져오기
 	collection := client.Database("test").Collection("categories")
-	cursor, err := collection.Find(context.Background(), bson.M{"category_id": categoryID})
+	var category models.Categories
+	err = collection.FindOne(context.Background(), bson.M{"_id": categoryID}).Decode(&category)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get category"})
+		return
+	}
+
+	// JSON 형식으로 응답 반환
+	json.NewEncoder(w).Encode(category)
+}
+
+func GetAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	collection := client.Database("test").Collection("categories")
+	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get categories"})
 		log.Fatal(err)
 		return
 	}
+	defer cursor.Close(context.Background())
 
 	var categories []models.Categories
-	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
 		var category models.Categories
 		cursor.Decode(&category)
@@ -58,6 +81,7 @@ func GetCategoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	categoryID, _ := primitive.ObjectIDFromHex(params["category_id"])
 
@@ -78,6 +102,7 @@ func UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	categoryID, _ := primitive.ObjectIDFromHex(params["category_id"])
 

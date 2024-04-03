@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"noah.io/ark/rest/models"
-	"strconv"
 )
 
 func init() {
@@ -17,6 +16,7 @@ func init() {
 }
 
 func AddAdviceHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var advice models.Advices
 	json.NewDecoder(r.Body).Decode(&advice)
 	advice.ID = primitive.NewObjectID()
@@ -33,21 +33,44 @@ func AddAdviceHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "Advice added successfully"})
 }
 
-func GetAdviceHandler(w http.ResponseWriter, r *http.Request) {
+func GetOneAdviceHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// URL에서 경로 매개변수 가져오기
 	params := mux.Vars(r)
-	adviceID, _ := strconv.Atoi(params["advice_id"])
+	adviceID, err := primitive.ObjectIDFromHex(params["advice_id"])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid advice ID"})
+		return
+	}
 
+	// MongoDB에서 해당 ID의 데이터 가져오기
 	collection := client.Database("test").Collection("advices")
-	cursor, err := collection.Find(context.Background(), bson.M{"advice_id": adviceID})
+	var advice models.Advices
+	err = collection.FindOne(context.Background(), bson.M{"_id": adviceID}).Decode(&advice)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get advice"})
+		return
+	}
+
+	// JSON 형식으로 응답 반환
+	json.NewEncoder(w).Encode(advice)
+}
+
+func GetAllAdvicesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	collection := client.Database("test").Collection("advices")
+	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get advices"})
 		log.Fatal(err)
 		return
 	}
+	defer cursor.Close(context.Background())
 
 	var advices []models.Advices
-	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
 		var advice models.Advices
 		cursor.Decode(&advice)
@@ -58,6 +81,7 @@ func GetAdviceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateAdviceHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	adviceID, _ := primitive.ObjectIDFromHex(params["advice_id"])
 
@@ -78,6 +102,7 @@ func UpdateAdviceHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteAdviceHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	adviceID, _ := primitive.ObjectIDFromHex(params["advice_id"])
 
