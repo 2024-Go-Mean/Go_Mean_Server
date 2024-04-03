@@ -56,30 +56,6 @@ func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(worry)
 }
 
-//func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
-//	params := mux.Vars(r)
-//	worryID, _ := strconv.Atoi(params["worry_id"])
-//
-//	collection := client.Database("test").Collection("worries")
-//	cursor, err := collection.Find(context.Background(), bson.M{"worryid": worryID})
-//	if err != nil {
-//		w.WriteHeader(http.StatusInternalServerError)
-//		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get worries"})
-//		log.Fatal(err)
-//		return
-//	}
-//
-//	var worries []models.Worries
-//	defer cursor.Close(context.Background())
-//	for cursor.Next(context.Background()) {
-//		var worry models.Worries
-//		cursor.Decode(&worry)
-//		worries = append(worries, worry)
-//	}
-//
-//	json.NewEncoder(w).Encode(worries)
-//}
-
 func GetAllWorriesHandler(w http.ResponseWriter, r *http.Request) {
 	collection := client.Database("test").Collection("worries")
 	cursor, err := collection.Find(context.Background(), bson.M{})
