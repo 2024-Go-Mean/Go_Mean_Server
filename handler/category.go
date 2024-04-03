@@ -16,6 +16,7 @@ func init() {
 }
 
 func AddCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var category models.Categories
 	json.NewDecoder(r.Body).Decode(&category)
 	category.ID = primitive.NewObjectID()
@@ -33,6 +34,7 @@ func AddCategoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetOneCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	// URL에서 경로 매개변수 가져오기
 	params := mux.Vars(r)
 	categoryID, err := primitive.ObjectIDFromHex(params["category_id"])
@@ -57,6 +59,7 @@ func GetOneCategoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	collection := client.Database("test").Collection("categories")
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
@@ -78,6 +81,7 @@ func GetAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	categoryID, _ := primitive.ObjectIDFromHex(params["category_id"])
 
@@ -98,6 +102,7 @@ func UpdateCategoryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	categoryID, _ := primitive.ObjectIDFromHex(params["category_id"])
 

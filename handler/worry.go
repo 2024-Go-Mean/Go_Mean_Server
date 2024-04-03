@@ -16,6 +16,7 @@ func init() {
 }
 
 func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var worry models.Worries
 	json.NewDecoder(r.Body).Decode(&worry)
 	worry.ID = primitive.NewObjectID()
@@ -33,6 +34,7 @@ func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	// URL에서 경로 매개변수 가져오기
 	params := mux.Vars(r)
 	worryID, err := primitive.ObjectIDFromHex(params["worry_id"])
@@ -57,6 +59,7 @@ func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllWorriesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	collection := client.Database("test").Collection("worries")
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
@@ -74,10 +77,12 @@ func GetAllWorriesHandler(w http.ResponseWriter, r *http.Request) {
 		worries = append(worries, worry)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(worries)
 }
 
 func UpdateWorryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	worryID, _ := primitive.ObjectIDFromHex(params["worry_id"])
 
@@ -98,6 +103,7 @@ func UpdateWorryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteWorryHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	worryID, _ := primitive.ObjectIDFromHex(params["worry_id"])
 
