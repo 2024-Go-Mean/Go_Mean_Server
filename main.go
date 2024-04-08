@@ -12,7 +12,6 @@ func main() {
 	// 라우터 설정
 	router := mux.NewRouter()
 	routes.CommentAPI(router)
-	routes.AdviceAPI(router)
 	routes.WorryAPI(router)
 	routes.CategoryAPI(router)
 

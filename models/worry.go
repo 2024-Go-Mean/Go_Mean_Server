@@ -10,7 +10,7 @@ type Worries struct {
 	Title      string             `json:"title"`
 	Content    string             `json:"content"`
 	Nickname   string             `json:"nickname"`
-	AiAdviceId Advices            `json:"ai_advice_id"`
+	AiAdvice   string             `json:"ai_advice"`
 	CategoryId Categories         `json:"category_id"`
 	CreatedAt  time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
 	UpdatedAt  time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
