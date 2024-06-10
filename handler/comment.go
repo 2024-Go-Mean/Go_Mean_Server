@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"noah.io/ark/rest/models"
+	"time"
 )
 
 func init() {
@@ -32,6 +33,7 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment.ID = primitive.NewObjectID()
+	comment.Timestamp = time.Now() // 현재 시간을 설정합니다.
 
 	collection := client.Database("test").Collection("comments")
 	_, err = collection.InsertOne(context.Background(), comment)
