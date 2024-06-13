@@ -10,7 +10,7 @@ import (
 )
 
 func ConnectDB() *mongo.Client {
-	Mongo_URL := "mongodb://127.0.0.1:27017"
+	Mongo_URL := "mongodb://54.180.29.2:3002"
 	client, err := mongo.NewClient(options.Client().ApplyURI(Mongo_URL))
 
 	if err != nil {
