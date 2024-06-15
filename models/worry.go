@@ -11,7 +11,7 @@ type Worries struct {
 	Content    string             `json:"content"`
 	Nickname   string             `json:"nickname"`
 	AiAdvice   string             `json:"ai_advice"`
-	CategoryId Categories         `json:"category_id"`
+	CategoryId primitive.ObjectID `json:"category_id" bson:"category_id"`
 	CreatedAt  time.Time          `json:"created_at,omitempty" bson:"created_at,omitempty"`
 	UpdatedAt  time.Time          `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 }

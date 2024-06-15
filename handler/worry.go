@@ -80,7 +80,6 @@ func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	// URL에서 경로 매개변수 가져오기
 	params := mux.Vars(r)
 	worryID, err := primitive.ObjectIDFromHex(params["worry_id"])
 	if err != nil {
@@ -89,7 +88,6 @@ func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// MongoDB에서 해당 ID의 데이터 가져오기
 	collection := client.Database("test").Collection("worries")
 	var worry models.Worries
 	err = collection.FindOne(context.Background(), bson.M{"_id": worryID}).Decode(&worry)
@@ -99,8 +97,29 @@ func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 카테고리 정보를 가져오는 부분 추가
+	categoryCollection := client.Database("test").Collection("categories")
+	var category models.Categories
+	err = categoryCollection.FindOne(context.Background(), bson.M{"_id": worry.CategoryId}).Decode(&category)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to get category"})
+		return
+	}
+
+	// worry에 category 정보를 추가
+	type WorryWithCategory struct {
+		models.Worries
+		Category string `json:"category"`
+	}
+
+	worryWithCategory := WorryWithCategory{
+		Worries:  worry,
+		Category: category.Category,
+	}
+
 	// JSON 형식으로 응답 반환
-	json.NewEncoder(w).Encode(worry)
+	json.NewEncoder(w).Encode(worryWithCategory)
 }
 
 func GetAllWorriesHandler(w http.ResponseWriter, r *http.Request) {
