@@ -66,6 +66,9 @@ func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&worry)
 	worry.ID = primitive.NewObjectID()
 
+	// ChatGPT 응답 추가
+	worry.AiAdvice = ChatGptFunc(worry.Content)
+
 	collection := client.Database("test").Collection("worries")
 	_, err := collection.InsertOne(context.Background(), worry)
 	if err != nil {
@@ -75,7 +78,8 @@ func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "Worry added successfully"})
+	// worry 객체를 반환
+	json.NewEncoder(w).Encode(worry)
 }
 
 func GetOneWorryHandler(w http.ResponseWriter, r *http.Request) {
