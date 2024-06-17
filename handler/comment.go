@@ -18,7 +18,7 @@ func init() {
 }
 
 func initMongoClient() {
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	clientOptions := options.Client().ApplyURI("mongodb://13.125.4.74:3002")
 	client, _ = mongo.Connect(context.Background(), clientOptions)
 }
 
