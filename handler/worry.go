@@ -14,6 +14,7 @@ import (
 	"noah.io/ark/rest/models"
 	"os"
 	"reflect"
+	"time"
 )
 
 func init() {
@@ -68,6 +69,7 @@ func AddWorryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// ChatGPT 응답 추가
 	worry.AiAdvice = ChatGptFunc(worry.Content)
+	worry.CreatedAt = time.Now()
 
 	collection := client.Database("test").Collection("worries")
 	_, err := collection.InsertOne(context.Background(), worry)
