@@ -27,7 +27,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
-          source: "myapp"
+          source: "gomean"
           target: "/home/ubuntu/gomean-server-golang/gomean"
 
       - name: Restart service via SSH
@@ -37,4 +37,5 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
+            sudo systemctl daemon-reload
             sudo systemctl restart gomean-server
