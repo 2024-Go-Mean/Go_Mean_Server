@@ -19,8 +19,8 @@ func main() {
 	// CORS 설정
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000"}, // 허용할 도메인을 설정
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders: []string{"Content-Type"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
 	})
 
 	// CORS 미들웨어로 라우터 감싸기
